@@ -77,24 +77,12 @@ module.exports = (env, argv) => {
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(argv.mode),
         'process.env.VANILLA_BUILDER_VERSION': JSON.stringify(process.env.npm_package_version || '1.0.0')
-      }),
-      
-      // WordPress externals
-      new webpack.ExternalTemplatesPlugin({
-        'react': 'window.React',
-        'react-dom': 'window.ReactDOM',
-        'wp-element': 'window.wp.element',
-        'wp-api-fetch': 'window.wp.apiFetch',
-        'wp-i18n': 'window.wp.i18n'
       })
     ],
     
     externals: {
       'react': 'React',
-      'react-dom': 'ReactDOM',
-      '@wordpress/element': 'wp.element',
-      '@wordpress/api-fetch': 'wp.apiFetch',
-      '@wordpress/i18n': 'wp.i18n'
+      'react-dom': 'ReactDOM'
     },
     
     optimization: {

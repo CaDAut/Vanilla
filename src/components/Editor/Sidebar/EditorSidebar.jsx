@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useDraggable } from '@dnd-kit/core';
-import { useEditor } from '../../../contexts/EditorContext';
+import { useEditor } from '../../../hooks/useEditor';
 
 const SidebarContainer = styled.div`
   width: 280px;

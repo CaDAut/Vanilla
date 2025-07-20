@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
-import { useEditor } from '../../contexts/EditorContext';
+import { useEditor } from '../../hooks/useEditor';
 import { useDragDrop } from '../../hooks/useDragDrop';
 import EditorToolbar from './Toolbar/EditorToolbar';
 import EditorSidebar from './Sidebar/EditorSidebar';

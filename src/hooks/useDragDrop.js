@@ -11,10 +11,10 @@ import {
 import { 
   sortableKeyboardCoordinates 
 } from '@dnd-kit/sortable';
-import { useEditor } from '../contexts/EditorContext';
+import { useEditor as useEditorContext } from '../contexts/EditorContext';
 
 export const useDragDrop = () => {
-  const { actions } = useEditor();
+  const { actions } = useEditorContext();
   const [draggedElement, setDraggedElement] = useState(null);
 
   // Configure sensors for drag and drop

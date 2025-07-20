@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useEditor } from '../../../contexts/EditorContext';
+import { useEditor } from '../../../hooks/useEditor';
 
 const ToolbarContainer = styled.div`
   display: flex;

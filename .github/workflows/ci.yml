@@ -1,0 +1,250 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # PHP Tests
+  php-tests:
+    name: PHP Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: [8.0, 8.1, 8.2]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, json
+        coverage: xdebug
+    
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: composer-${{ runner.os }}-${{ matrix.php-version }}-${{ hashFiles('composer.lock') }}
+        restore-keys: composer-${{ runner.os }}-${{ matrix.php-version }}-
+    
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+    
+    - name: Run PHP tests
+      run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: php
+        name: PHP ${{ matrix.php-version }}
+
+  # JavaScript Tests
+  js-tests:
+    name: JavaScript Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run ESLint
+      run: npm run lint
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Build production assets
+      run: npm run build
+
+  # Code Quality
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.1
+        extensions: mbstring, json
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+    
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Install Node dependencies
+      run: npm ci
+    
+    - name: Run PHP CodeSniffer
+      run: |
+        if [ -f "vendor/bin/phpcs" ]; then
+          vendor/bin/phpcs --standard=WordPress includes/
+        else
+          echo "PHP CodeSniffer not installed, skipping..."
+        fi
+    
+    - name: Run ESLint
+      run: npm run lint
+    
+    - name: Check for security vulnerabilities
+      run: |
+        npm audit --audit-level=moderate
+        if [ -f "vendor/bin/security-checker" ]; then
+          vendor/bin/security-checker security:check composer.lock
+        fi
+
+  # Build and Package
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: [php-tests, js-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.1
+        extensions: mbstring, json
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+    
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+    
+    - name: Install Node dependencies
+      run: npm ci
+    
+    - name: Build production assets
+      run: npm run build
+    
+    - name: Create plugin package
+      run: |
+        mkdir -p dist-package
+        rsync -av --exclude-from='.gitignore' \
+          --exclude='.git*' \
+          --exclude='node_modules' \
+          --exclude='tests' \
+          --exclude='dist-package' \
+          --exclude='*.md' \
+          --exclude='package*.json' \
+          --exclude='webpack.config.js' \
+          --exclude='babel.config.js' \
+          --exclude='postcss.config.js' \
+          --exclude='.eslintrc.js' \
+          --exclude='phpunit.xml' \
+          --exclude='src' \
+          ./ dist-package/vanilla-builder/
+    
+    - name: Create zip archive
+      run: |
+        cd dist-package
+        zip -r vanilla-builder.zip vanilla-builder/
+    
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: vanilla-builder-build
+        path: dist-package/vanilla-builder.zip
+        retention-days: 7
+
+  # Security Scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        severity: 'CRITICAL,HIGH'
+
+  # Deploy to staging (only on develop branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: vanilla-builder-build
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment commands here
+        echo "Deployment completed"
+
+  # Deploy to production (only on main branch with tag)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: vanilla-builder-build
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: vanilla-builder.zip
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+        echo "Production deployment completed"

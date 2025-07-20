@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import styled from 'styled-components';
 import { useDroppable } from '@dnd-kit/core';
-import { useEditor } from '../../../contexts/EditorContext';
+import { useEditor } from '../../../hooks/useEditor';
 import RenderElement from '../../Elements/RenderElement';
 
 const CanvasContainer = styled.div`
