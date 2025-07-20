@@ -1,0 +1,68 @@
+# Dependencies
+/node_modules/
+/vendor/
+
+# Build outputs
+/dist/
+/build/
+
+# Development files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Coverage and test reports
+/coverage/
+/.nyc_output/
+/test-results/
+/junit.xml
+
+# PHP specific
+composer.phar
+composer.lock
+
+# WordPress specific
+wp-config-local.php
+wp-content/uploads/
+.htaccess
+
+# Package managers
+package-lock.json
+yarn.lock
+
+# Build tools
+.cache/
+.parcel-cache/
+.webpack/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
