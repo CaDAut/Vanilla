@@ -1,0 +1,38 @@
+{
+    "name": "cadaut/vanilla-builder",
+    "description": "A powerful drag-and-drop page builder for WordPress with React integration",
+    "type": "wordpress-plugin",
+    "version": "1.0.0",
+    "require": {
+        "php": "^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "CaDAut",
+            "email": "contact@cadaut.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "VanillaBuilder\\": "includes/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VanillaBuilder\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "install-dev": "composer install --dev",
+        "autoload": "composer dump-autoload"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    }
+}
